@@ -7,6 +7,8 @@ sources_common = [
     'src/main.c',
     'src/time.c',
     'src/bootloader.c',
+    'src/spi.c',
+    'src/pmw3360.c',
 ]
 
 sources_central = [
@@ -48,54 +50,4 @@ foreach side : sides
         command : [python, '@INPUT@', 'query_ncl', side + '.c'],
         depend_files : ['.eval.json'],
     )
-
-    dir_base = meson.current_source_dir()
-    cc_incs = ['--include', side_h.full_path()]
-
-    foreach dir : inc_dirs
-        cc_incs += '-I' + join_paths(dir_base, dir)
-    endforeach
-
-    compiler = generator(cc,
-        output : '@BASENAME@.rel',
-        arguments : cc_args + cc_incs + ['-c', '@INPUT@', '-o', '@OUTPUT@'],
-        depends : [side_c, side_h],
-    )
-
-    sources = sources_common + [side_c]
-    
-    if side == 'central'
-        sources += sources_central
-
-        extra_sources = get_option('extra_sources').strip()
-        if extra_sources != ''
-            sources += extra_sources.split(',')
-        endif
-    elif side == 'peripheral'
-        sources += sources_peripheral
-
-        extra_periph_sources = get_option('extra_periph_sources').strip()
-        if extra_periph_sources != ''
-            sources += extra_periph_sources.split(',')
-        endif
-    endif
-
-    rel = compiler.process(sources)
-
-    ihx = custom_target(side + '.ihx',
-        input : rel,
-        output : side + '.ihx',
-        install : true,
-        install_dir : 'firmware',
-        command : [cc, cc_args, '-o', '@OUTPUT@', '@INPUT@'],
-    )
-
-    flash = run_target('flash_' + side,
-        command : [wchisp, 'flash', ihx.full_path()],
-        depends : ihx,
-    )
 endforeach
-
-wchisp_info = run_target('wchisp_info',
-    command : [wchisp, 'info'],
-)

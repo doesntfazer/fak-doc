@@ -1,5 +1,6 @@
 #include "ch55x.h"
 #include "keyboard.h"
+#include "spi.h"
 #include "time.h"
 
 #ifdef SPLIT_SIDE_CENTRAL
@@ -51,26 +52,6 @@ static void main() {
     TMR0_init();
     USB_init();
 #endif
+    SPI_init();  // Add this line
     keyboard_init();
-
-#ifdef UART0_ALT
-    PIN_FUNC |= bUART0_PIN_X;
-#endif
-#ifdef UART1_ALT
-    PIN_FUNC |= bUART1_PIN_X;
-#endif
-
-#if CH55X == 9
-    // This is to get same behavior as CH552 to drive pins high immediately
-    P0_DIR = 0xFF;
-    P1_DIR = 0xFF;
-    P2_DIR = 0xFF;
-    P3_DIR = 0xFF;
-#endif
-
-    EA = 1;
-
-    while (1) {
-        keyboard_scan();
-    }
 }
